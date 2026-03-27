@@ -82,6 +82,32 @@
             background-color: #fff;
         }
 
+        .movie-list {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fafafa;
+            padding: 10px 14px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 0;
+            font-size: 0.9rem;
+            font-weight: normal;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
         .btn-submit {
             width: 100%;
             padding: 10px;
@@ -126,22 +152,45 @@
             </div>
 
             <div class="form-group">
-                <label for="movie_id">Movies to Rent:</label>
-                <select name="movie_id" id="movie_id" required>
-                    <option value="" disabled selected>-- Select Movie --</option>
+                <label>Movies to Rent:</label>
+                <div id="movie-list" class="movie-list">
                     @foreach ($movies as $movie)
-                        <option value="{{ $movie->id }}">{{ $movie->title }}</option>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="movie_id[]" value="{{ $movie->id }}">
+                            {{ $movie->title }}
+                        </label>
                     @endforeach
-                </select>
+                </div>
                 @error('movie_id')
                     <div class="alert-error">{{ $message }}</div>
                 @enderror
-
             </div>
 
-            <button type="submit" class="btn-submit">Create Rental</button>
+            <button type="submit" class="btn-submit">Save Rental</button>
         </form>
     </div>
+    <script>
+        const rentalsByAddress = @json($rentalsByAddress);
+
+        const addressSelect = document.getElementById('address_id');
+        const checkboxes = document.querySelectorAll('input[name="movie_id[]"]');
+
+        function syncCheckboxes(addressId) {
+            const rented = rentalsByAddress[addressId] ?? [];
+            checkboxes.forEach(cb => {
+                cb.checked = rented.includes(parseInt(cb.value));
+            });
+        }
+
+        addressSelect.addEventListener('change', function() {
+            syncCheckboxes(this.value);
+        });
+
+        // Pre-select on page load if an address is already selected
+        if (addressSelect.value) {
+            syncCheckboxes(addressSelect.value);
+        }
+    </script>
 </body>
 
 </html>

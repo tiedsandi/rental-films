@@ -27,7 +27,11 @@ class RentalController extends Controller
         $movies = Movies::all();
         $addresses = Addresses::with('customers')->get();
 
-        return view('rental.create', compact('movies', 'addresses'));
+        $rentalsByAddress = Rentals::all()
+            ->groupBy('address_id')
+            ->map(fn($rentals) => $rentals->pluck('movie_id')->values());
+
+        return view('rental.create', compact('movies', 'addresses', 'rentalsByAddress'));
     }
 
     /**
@@ -36,16 +40,24 @@ class RentalController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'address_id' => 'required|exists:addresses,id',
-            'movie_id' => 'required|exists:movies,id'
+            'address_id'   => 'required|exists:addresses,id',
+            'movie_id'     => 'required|array|min:1',
+            'movie_id.*'   => 'exists:movies,id',
         ]);
 
-        Rentals::create([
-            'address_id' => $request->address_id,
-            'movie_id' => $request->movie_id
-        ]);
+        Rentals::where('address_id', $request->address_id)->delete();
 
-        return redirect()->route('rental.index')->with('success', 'Rent transcation saved successfully.');
+        $inserts = [];
+        foreach ($request->movie_id as $movieId) {
+            $inserts[] = [
+                'address_id' => $request->address_id,
+                'movie_id'   => $movieId,
+            ];
+        }
+
+        Rentals::insert($inserts);
+
+        return redirect()->route('rental.index')->with('success', 'Rent transaction saved successfully.');
     }
 
     /**
