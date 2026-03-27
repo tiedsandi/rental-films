@@ -173,22 +173,28 @@
         const rentalsByAddress = @json($rentalsByAddress);
 
         const addressSelect = document.getElementById('address_id');
-        const checkboxes = document.querySelectorAll('input[name="movie_id[]"]');
+        const allCheckboxes = document.querySelectorAll('input[name="movie_id[]"]');
 
-        function syncCheckboxes(addressId) {
-            const rented = rentalsByAddress[addressId] ?? [];
-            checkboxes.forEach(cb => {
-                cb.checked = rented.includes(parseInt(cb.value));
+        function updateCheckboxes(addressId) {
+            const rentedMovieIds = rentalsByAddress[addressId] || [];
+
+            allCheckboxes.forEach(function(checkbox) {
+                const movieId = parseInt(checkbox.value);
+
+                if (rentedMovieIds.includes(movieId)) {
+                    checkbox.checked = true;
+                } else {
+                    checkbox.checked = false;
+                }
             });
         }
 
         addressSelect.addEventListener('change', function() {
-            syncCheckboxes(this.value);
+            updateCheckboxes(this.value);
         });
 
-        // Pre-select on page load if an address is already selected
         if (addressSelect.value) {
-            syncCheckboxes(addressSelect.value);
+            updateCheckboxes(addressSelect.value);
         }
     </script>
 </body>
